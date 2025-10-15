@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>사내 일정 등록 폼 · Mock</title>
+  <style>
+    :root {
+      --bg: #0f172a;      /* slate-900 */
+      --panel: #111827;   /* gray-900 */
+      --muted: #94a3b8;   /* slate-400 */
+      --text: #e5e7eb;    /* gray-200 */
+      --accent: #22c55e;  /* green-500 */
+      --danger: #ef4444;  /* red-500 */
+      --ring: #60a5fa;    /* blue-400 */
+      --card: #1f2937;    /* gray-800 */
+      --border: #334155;  /* slate-700 */
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      background: linear-gradient(180deg, var(--bg), #0b1226 60%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 32px auto;
+      padding: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 900px) {
+      .grid.two { grid-template-columns: 1.2fr 0.8fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card), #1a2433);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    h1 { font-size: 28px; margin: 6px 0 18px; }
+    h2 { font-size: 18px; margin: 0 0 12px; color: var(--muted); }
+
+    form { display: grid; gap: 16px; }
+
+    .row { display: grid; gap: 12px; }
+    @media (min-width: 720px) {
+      .row.cols-2 { grid-template-columns: 1fr 1fr; }
+      .row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    label { font-size: 14px; color: var(--muted); display: inline-block; margin-bottom: 6px; }
+    .req { color: #f59e0b; }
+
+    input[type="text"], input[type="date"], input[type="time"], input[type="url"], input[type="email"], select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b1320;
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.25);
+    }
+
+    .inline { display: flex; align-items: center; gap: 10px; }
+    .hint { font-size: 12px; color: var(--muted); }
+    .counter { font-variant-numeric: tabular-nums; }
+
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      appearance: none; border: 0; cursor: pointer;
+      border-radius: 999px; padding: 10px 16px; font-weight: 600;
+    }
+    .btn-primary { background: var(--accent); color: #052e12; }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 999px; background: #0b1320; border: 1px solid var(--border);
+      font-size: 12px; margin-right: 8px; margin-bottom: 8px;
+    }
+
+    .error { color: var(--danger); font-size: 13px; margin-top: 6px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    .preview {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      background: #0a0f1a;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 14px;
+      overflow: auto;
+      max-height: 420px;
+    }
+
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; padding: 12px 16px; border-radius: 12px;
+      background: #0b1320; border: 1px solid var(--border); color: var(--text);
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      opacity: 0; transform: translateY(8px); transition: all .25s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>일정 등록</h1>
+    <div class="grid two">
+      <section class="card">
+        <form id="scheduleForm" novalidate>
+          <div>
+            <label for="title">일정 제목 <span class="req" aria-hidden="true">*</span></label>
+            <input id="title" name="title" type="text" placeholder="예: 분기 OKR 킥오프" required minlength="2" maxlength="120" />
+            <div id="titleError" class="error" role="alert" aria-live="polite"></div>
+          </div>
+
+          <div>
+            <label for="desc">설명</label>
+            <textarea id="desc" name="description" rows="4" placeholder="참석자, 안건, 사전 읽을거리 등" maxlength="500"></textarea>
+            <div class="hint"><span id="descCount" class="counter">0</span>/500</div>
+          </div>
+
+          <div class="row cols-2">
+            <div>
+              <label for="location">위치</label>
+              <input id="location" name="location" type="text" placeholder="회의실 A / Zoom 링크" />
+            </div>
+            <div>
+              <label for="link">첨부 링크</label>
+              <input id="link" name="link" type="url" placeholder="https://…" />
+            </div>
+          </div>
+
+          <div class="row cols-3">
+            <div class="inline" style="margin-top: 10px;">
+              <input id="allday" name="allDay" type="checkbox" />
+              <label for="allday" class="inline">종일</label>
+            </div>
+            <div>
+              <label for="timezone">시간대</label>
+              <select id="timezone" name="timezone"></select>
+            </div>
+            <div>
+              <label for="privacy">공개 범위</label>
+              <select id="privacy" name="privacy">
+                <option value="public">공개</option>
+                <option value="internal" selected>사내용</option>
+                <option value="private">비공개</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row cols-2">
+            <div>
+              <label for="startDate">시작</label>
+              <div class="row cols-2">
+                <input id="startDate" name="startDate" type="date" required />
+                <input id="startTime" name="startTime" type="time" required />
+              </div>
+            </div>
+            <div>
+              <label for="endDate">종료</label>
+              <div class="row cols-2">
+                <input id="endDate" name="endDate" type="date" required />
+                <input id="endTime" name="endTime" type="time" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="row cols-2">
+            <div>
+              <label for="category">카테고리</label>
+              <select id="category" name="category">
+                <option value="meeting" selected>회의</option>
+                <option value="deadline">마감/데드라인</option>
+                <option value="leave">휴가/부재</option>
+                <option value="training">교육</option>
+                <option value="etc">기타</option>
+              </select>
+            </div>
+            <div>
+              <label for="color">색상</label>
+              <input id="color" name="color" type="color" value="#22c55e" />
+            </div>
+          </div>
+
+          <div>
+            <label for="attendees">참석자 이메일 (쉼표로 구분)</label>
+            <input id="attendees" name="attendees" type="text" placeholder="dev@…, pm@…, 디자인@…" />
+            <div id="attendeeChips" class="chips" aria-live="polite" style="margin-top:8px;"></div>
+          </div>
+
+          <fieldset class="card" style="padding:16px;">
+            <legend class="sr-only">반복</legend>
+            <h2>반복</h2>
+            <div class="row cols-3">
+              <div>
+                <label for="recurrence">반복 주기</label>
+                <select id="recurrence" name="recurrence">
+                  <option value="none" selected>없음</option>
+                  <option value="daily">매일</option>
+                  <option value="weekly">매주</option>
+                  <option value="monthly">매월</option>
+                </select>
+              </div>
+              <div>
+                <label for="byWeekday">요일(매주)</label>
+                <select id="byWeekday" name="byWeekday" multiple size="1" disabled>
+                  <option value="MO">월</option>
+                  <option value="TU">화</option>
+                  <option value="WE">수</option>
+                  <option value="TH">목</option>
+                  <option value="FR">금</option>
+                  <option value="SA">토</option>
+                  <option value="SU">일</option>
+                </select>
+                <div class="hint">Ctrl/⌘ 클릭으로 다중 선택</div>
+              </div>
+              <div>
+                <label for="until">끝나는 날</label>
+                <input id="until" name="until" type="date" disabled />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="card" style="padding:16px;">
+            <legend class="sr-only">알림</legend>
+            <h2>알림</h2>
+            <div class="row cols-3" style="align-items:end;">
+              <div>
+                <label for="remType">방식</label>
+                <select id="remType">
+                  <option value="push">푸시</option>
+                  <option value="email">이메일</option>
+                </select>
+              </div>
+              <div>
+                <label for="remMinutes">분 전</label>
+                <input id="remMinutes" type="number" min="1" max="10080" value="30" />
+              </div>
+              <div>
+                <button type="button" class="btn-ghost" id="addReminder">+ 알림 추가</button>
+              </div>
+            </div>
+            <div id="reminderList" style="margin-top:8px;"></div>
+          </fieldset>
+
+          <div class="btns">
+            <button class="btn-primary" type="submit">미리보기 생성</button>
+            <button class="btn-ghost" type="reset">초기화</button>
+          </div>
+        </form>
+      </section>
+      <aside class="card">
+        <h2>전송 페이로드 미리보기</h2>
+        <div class="hint" style="margin-bottom:8px;">서버 연결 전까지는 <strong>저장되지 않습니다</strong>. 제출 시 아래 JSON만 갱신됩니다.</div>
+        <pre id="preview" class="preview" aria-live="polite">{}</pre>
+        <div class="hint">백엔드 연결 시 <code>fetch('/api/events', {{ method:'POST', body: JSON.stringify(payload) }})</code> 형태로 사용하세요.</div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">폼이 검증되었어요. 아래 미리보기를 확인하세요.</div>
+
+  <script>
+    // --- 유틸 ---
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    // 설명 글자수 카운터
+    const desc = $('#desc');
+    const descCount = $('#descCount');
+    desc.addEventListener('input', () => { descCount.textContent = desc.value.length; });
+
+    // 타임존 목록 (브라우저 우선 표시)
+    const tzSelect = $('#timezone');
+    const commonTZ = [
+      'Asia/Seoul','Asia/Tokyo','Asia/Shanghai','Asia/Hong_Kong','Asia/Singapore',
+      'Europe/London','Europe/Berlin','Europe/Paris',
+      'America/Los_Angeles','America/New_York'
+    ];
+    try {
+      const local = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const tzs = new Set([local, ...commonTZ]);
+      tzs.forEach(tz => {
+        const opt = document.createElement('option');
+        opt.value = tz; opt.textContent = tz === local ? `${tz} (현재)` : tz;
+        tzSelect.appendChild(opt);
+      });
+    } catch { commonTZ.forEach(tz => tzSelect.appendChild(new Option(tz, tz))); }
+
+    // 종일 토글
+    const allday = $('#allday');
+    const startTime = $('#startTime');
+    const endTime = $('#endTime');
+    const toggleTimeInputs = () => {
+      const disabled = allday.checked;
+      startTime.disabled = disabled; endTime.disabled = disabled;
+      startTime.required = !disabled; endTime.required = !disabled;
+      if (disabled) { startTime.value = ''; endTime.value = ''; }
+    };
+    allday.addEventListener('change', toggleTimeInputs);
+    toggleTimeInputs();
+
+    // 반복 옵션
+    const recur = $('#recurrence');
+    const byWeekday = $('#byWeekday');
+    const until = $('#until');
+    const handleRecurUI = () => {
+      const v = recur.value;
+      const weekly = v === 'weekly';
+      byWeekday.disabled = !weekly;
+      until.disabled = v === 'none';
+    };
+    recur.addEventListener('change', handleRecurUI);
+    handleRecurUI();
+
+    // 참석자 칩
+    const attendeesInput = $('#attendees');
+    const chips = $('#attendeeChips');
+    const renderChips = () => {
+      chips.innerHTML = '';
+      const emails = (attendeesInput.value || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      emails.forEach(e => {
+        const pill = document.createElement('span');
+        pill.className = 'pill'; pill.textContent = e;
+        const x = document.createElement('button');
+        x.type = 'button'; x.textContent = '×'; x.className = 'btn-ghost';
+        x.style.padding = '0 8px'; x.style.fontSize = '12px';
+        x.addEventListener('click', () => {
+          const rest = emails.filter(v => v !== e);
+          attendeesInput.value = rest.join(', ');
+          renderChips();
+        });
+        pill.appendChild(x);
+        chips.appendChild(pill);
+      });
+    };
+    attendeesInput.addEventListener('input', renderChips);
+
+    // 알림 추가/제거
+    const reminderList = $('#reminderList');
+    $('#addReminder').addEventListener('click', () => {
+      const type = $('#remType').value;
+      const minutes = Math.max(1, Math.min(10080, parseInt($('#remMinutes').value || '30', 10)));
+      const row = document.createElement('div');
+      row.className = 'pill';
+      row.innerHTML = `${type.toUpperCase()} • ${minutes}분 전`;
+      const del = document.createElement('button');
+      del.type = 'button'; del.textContent = '삭제'; del.className = 'btn-ghost';
+      del.style.fontSize = '12px'; del.addEventListener('click', () => row.remove());
+      row.dataset.type = type; row.dataset.minutes = String(minutes);
+      row.appendChild(del);
+      reminderList.appendChild(row);
+    });
+
+    // 토스트 헬퍼
+    const toast = (msg) => {
+      const t = $('#toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1800);
+    };
+
+    // 간단 검증
+    const title = $('#title');
+    const titleError = $('#titleError');
+    const dateInputs = ['#startDate','#endDate'].map($);
+
+    function parseDateTime(dateEl, timeEl, tz) {
+      const d = dateEl.value; const t = timeEl?.value;
+      if (!d) return null;
+      if (allday.checked || !t) return `${d}`; // all-day: 날짜만
+      return `${d}T${t}:00`;
+    }
+
+    function collectReminders() {
+      return Array.from(reminderList.children).map(p => ({
+        type: p.dataset.type,
+        minutes: Number(p.dataset.minutes)
+      }));
+    }
+
+    function collectWeekdays() {
+      return Array.from(byWeekday.selectedOptions).map(o => o.value);
+    }
+
+    function buildPayload() {
+      const tz = tzSelect.value || 'UTC';
+      const start = parseDateTime($('#startDate'), $('#startTime'), tz);
+      const end = parseDateTime($('#endDate'), $('#endTime'), tz);
+
+      const payload = {
+        title: title.value.trim(),
+        description: desc.value.trim() || null,
+        location: $('#location').value.trim() || null,
+        link: $('#link').value.trim() || null,
+        allDay: allday.checked,
+        timezone: tz,
+        start,
+        end,
+        category: $('#category').value,
+        color: $('#color').value,
+        privacy: $('#privacy').value,
+        attendees: (attendeesInput.value || '').split(',').map(s=>s.trim()).filter(Boolean),
+        recurrence: (function(){
+          const r = recur.value;
+          if (r === 'none') return null;
+          const obj = { freq: r };
+          if (r === 'weekly') obj.byWeekday = collectWeekdays();
+          if ($('#until').value) obj.until = $('#until').value;
+          return obj;
+        })(),
+        reminders: collectReminders()
+      };
+
+      return payload;
+    }
+
+    function validateDateRange(startStr, endStr) {
+      if (!startStr || !endStr) return '시작/종료를 모두 입력해 주세요.';
+      // 단순 비교 (ISO local 형태)
+      if (endStr < startStr) return '종료가 시작보다 앞설 수 없습니다.';
+      return null;
+    }
+
+    $('#scheduleForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      titleError.textContent = '';
+
+      if (!title.value.trim()) {
+        titleError.textContent = '제목을 입력해 주세요.';
+        title.focus();
+        return;
+      }
+
+      // 날짜/시간 검증
+      const payload = buildPayload();
+      const err = validateDateRange(payload.start, payload.end);
+      if (err) { toast('날짜/시간을 확인해 주세요.'); return alert(err); }
+
+      // 이메일 포맷 간단 체크
+      const bad = payload.attendees.find(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+      if (bad) { return alert(`이메일 형식이 올바르지 않습니다: ${bad}`); }
+
+      // 미리보기 렌더
+      $('#preview').textContent = JSON.stringify(payload, null, 2);
+      toast('폼이 검증되었어요. 아래 미리보기를 확인하세요.');
+    });
+
+    $('#scheduleForm').addEventListener('reset', () => {
+      setTimeout(()=>{ $('#preview').textContent = '{}'; renderChips(); }, 0);
+    });
+  </script>
+</body>
+</html>
